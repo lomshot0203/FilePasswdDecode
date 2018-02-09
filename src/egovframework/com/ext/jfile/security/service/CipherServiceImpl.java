@@ -116,19 +116,19 @@ public class CipherServiceImpl implements CipherService {
 		}
 	}
 
-	public byte[] encrypt(byte[] data) throws NoSuchAlgorithmException,
+	public byte[] encrypt(byte[] data, JCryptoHelper helper) throws NoSuchAlgorithmException,
 			InvalidKeyException, NoSuchPaddingException, IOException,
 			InvalidKeySpecException, IllegalBlockSizeException,
 			BadPaddingException, InvalidAlgorithmParameterException {
 		Cipher cipher = getCipherInstance();
 
-		if (JCryptoHelper.isNecessaryIvBytes(this.jcrypto.getAlgorithm())) {
-			IvParameterSpec ivParameterSpec = new IvParameterSpec(JCryptoHelper.DEFAULT_IV_BYTES);
+		if (helper.isNecessaryIvBytes(this.jcrypto.getAlgorithm())) {
+			IvParameterSpec ivParameterSpec = new IvParameterSpec(helper.DEFAULT_IV_BYTES);
 			cipher.init(Cipher.ENCRYPT_MODE,generateKey(
-					JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()), ivParameterSpec);
+					helper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()), ivParameterSpec);
 		} else {
 			cipher.init(Cipher.ENCRYPT_MODE,generateKey(
-					JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()));
+					helper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()));
 		}
 		if (jcrypto.isApplyBase64()) {
 			return Base64.encodeBase64(cipher.doFinal(data));
@@ -138,21 +138,21 @@ public class CipherServiceImpl implements CipherService {
 		}
 	}
 
-	public byte[] decrypt(byte[] data) throws InvalidKeyException,
+	public byte[] decrypt(byte[] data, JCryptoHelper helper) throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidKeySpecException,
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, IOException,
 			InvalidAlgorithmParameterException {
 		Cipher cipher = getCipherInstance();
-		if (JCryptoHelper.isNecessaryIvBytes(this.jcrypto.getAlgorithm())) {
-			IvParameterSpec ivParameterSpec = new IvParameterSpec(JCryptoHelper.DEFAULT_IV_BYTES);
+		if (helper.isNecessaryIvBytes(this.jcrypto.getAlgorithm())) {
+			IvParameterSpec ivParameterSpec = new IvParameterSpec(helper.DEFAULT_IV_BYTES);
 			cipher.init(
 					Cipher.DECRYPT_MODE, 
-					generateKey(JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()), ivParameterSpec);
+					generateKey(helper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()), ivParameterSpec);
 		} else {
 			cipher.init(
 					Cipher.DECRYPT_MODE,
-					generateKey(JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()));
+					generateKey(helper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()));
 		}
 
 		byte[] bData = null;
@@ -169,123 +169,5 @@ public class CipherServiceImpl implements CipherService {
 
 	}
 
-	public void decrypt(InputStream in, OutputStream out)
-			throws NoSuchAlgorithmException, InvalidKeyException, IOException,
-			IllegalBlockSizeException, NoSuchPaddingException,
-			BadPaddingException, InvalidKeySpecException,
-			InvalidAlgorithmParameterException {
-		decrypt(in, out, true);
-	}
 
-	public void decryptForZipFile(InputStream in, OutputStream out)
-			throws NoSuchAlgorithmException, InvalidKeyException, IOException,
-			IllegalBlockSizeException, NoSuchPaddingException,
-			BadPaddingException, InvalidKeySpecException,
-			InvalidAlgorithmParameterException {
-		decrypt(in, out, false);
-	}
-
-	public void encrypt(InputStream in, OutputStream out)
-			throws NoSuchAlgorithmException, InvalidKeyException,
-			NoSuchPaddingException, IOException, BadPaddingException,
-			InvalidKeySpecException, InvalidAlgorithmParameterException {
-		Cipher cipher = Cipher.getInstance(jcrypto.getAlgorithm());
-		if (JCryptoHelper.isNecessaryIvBytes(this.jcrypto.getAlgorithm())) {
-			IvParameterSpec ivParameterSpec = new IvParameterSpec(JCryptoHelper.DEFAULT_IV_BYTES);
-			cipher.init(Cipher.ENCRYPT_MODE,
-					generateKey(JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()), ivParameterSpec);
-		} else {
-			cipher.init(Cipher.ENCRYPT_MODE,
-					generateKey(JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()));
-		}
-
-		CipherOutputStream cos = new CipherOutputStream(out, cipher);
-
-		byte[] buffer = new byte[2048];
-		int bytesRead;
-		while ((bytesRead = in.read(buffer)) != -1) {
-			cos.write(buffer, 0, bytesRead);
-			cos.flush();
-		}
-		cos.close();
-
-		java.util.Arrays.fill(buffer, (byte) 0);
-	}
-	
-	/**
-	 *  입력받은 스트림을 close 여부를 전달 받아 복호화 처리를 한다. 
-	 * @param in 입력 스트림
-	 * @param out 출력 스트림
-	 * @param isStreamClose close 여부
-	 * @throws NoSuchAlgorithmException 암호화 알고리즘을 찾을 수 없을때 예외 처리
-	 * @throws InvalidKeyException 규칙에 맞지 않은 key 일때 예외 처리
-	 * @throws IOException 입/출력 예외 처리
-	 * @throws IllegalBlockSizeException 규칙에 맞지 않은 블럭사이즈 일때 예외 처리
-	 * @throws NoSuchPaddingException 패딩 정보를 찾을 수 없을때 예외 처리
-	 * @throws BadPaddingException 잘못된 패딩 일때 예외처리
-	 * @throws InvalidKeySpecException 규칙에 맞지 않은 keySpec 일때 예외 처리
-	 * @throws InvalidAlgorithmParameterException 유효하지 않은 알고리즘 파라미터 일때 예외처리
-	 */
-	private void decrypt(InputStream in, OutputStream out, boolean isStreamClose)
-			throws NoSuchAlgorithmException, InvalidKeyException, IOException,
-			IllegalBlockSizeException, NoSuchPaddingException,
-			BadPaddingException, InvalidKeySpecException,
-			InvalidAlgorithmParameterException {
-		Cipher cipher = Cipher.getInstance(jcrypto.getAlgorithm());
-		if (JCryptoHelper.isNecessaryIvBytes(this.jcrypto.getAlgorithm())) {
-			IvParameterSpec ivParameterSpec = new IvParameterSpec(JCryptoHelper.DEFAULT_IV_BYTES);
-			cipher.init(Cipher.DECRYPT_MODE,
-					generateKey(JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()), ivParameterSpec);
-		} else {
-			cipher.init(Cipher.DECRYPT_MODE,
-					generateKey(JCryptoHelper.getKeyAlgorithm(this.jcrypto.getAlgorithm()),this.jcrypto.getAlgorithm(), this.jcrypto.getKeyBytes()));
-		}
-
-		byte[] buffer = new byte[2048];
-		int bytesRead;
-		while ((bytesRead = in.read(buffer)) != -1) {
-			out.write(cipher.update(buffer, 0, bytesRead));
-		}
-
-		out.write(cipher.doFinal());
-		out.flush();
-		if(isStreamClose) {
-			in.close();
-			out.close();
-		}
-	}
-
-	/**
-	 * 암호화 Helper 클래스
-	 *
-	 */
-	static class JCryptoHelper {
-		
-		/** 디폴트로 제공할 ivBytes 를 초기화 한다. */
-		public static byte[] DEFAULT_IV_BYTES = { (byte) 5, (byte) 6, (byte) 7,
-				(byte) 8, (byte) 9, (byte) 7, (byte) 1, (byte) 2 };
-
-		/** 입력받은 알고리즘 중에 키 알고리즘에 해당하는 부분을 추출한다.*/
-		public static String getKeyAlgorithm(String algorithm) {
-			return algorithm.split("\\/")[0];
-		}
-
-		/** 운용방식에 따른 ivBytes 필요여부를 검사한다. */
-		public static boolean isNecessaryIvBytes(String algorithm) {
-			String[] algorithmArr = algorithm.split("\\/");
-
-			if (algorithmArr.length == 1) {
-				return false;
-			} else if (algorithmArr.length == 2 || algorithmArr.length == 3) {
-				if ("CBC".equalsIgnoreCase(algorithmArr[1])
-						|| "OFB".equalsIgnoreCase(algorithmArr[1])
-						|| "CFB".equalsIgnoreCase(algorithmArr[1])) {
-					return true;
-				} else {
-					return false;
-				}
-			}
-			return false;
-		}
-	}
 }

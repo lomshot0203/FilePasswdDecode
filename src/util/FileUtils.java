@@ -2,6 +2,7 @@ package util;
 
 import egovframework.com.ext.jfile.security.service.CipherService;
 import egovframework.com.ext.jfile.security.service.CipherServiceImpl;
+import egovframework.com.ext.jfile.security.service.JCryptoHelper;
 import file.CustomFile;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
@@ -26,14 +27,16 @@ public class FileUtils {
     private ArrayList<CustomFile> fileNameList = new ArrayList<>();
     private ArrayList<CustomFile> dirNameList = new ArrayList<>();
     private ApplicationContext context;
-    private CipherServiceImpl cipher;
+    private CipherService cipher;
+    private JCryptoHelper helper;
 
 
     public FileUtils () {
         fileNameList = new ArrayList<>();
         dirNameList = new ArrayList<>();
         context = new GenericXmlApplicationContext("classpath:context-jfile.xml");
-        cipher = (CipherServiceImpl) context.getBean("cipherService");
+        cipher = (CipherService) context.getBean("cipherService");
+        helper = new JCryptoHelper();
     }
 
     public  ArrayList<CustomFile> getFileNameList() {
@@ -91,8 +94,8 @@ public class FileUtils {
 
 
     /**디렉토리 리스트를 반환한다.*/
-    public  void getDirList(String path, String name) {
-        File file = new File(path);
+    public  void getDirList(String root, String name) {
+        File file = new File(root);
         File[] fileList = file.listFiles();
         for (int i=0; i<fileList.length; i++) {
             if (fileList[i].isDirectory() && fileList[i].canRead() && fileList[i].canWrite()) {
@@ -101,7 +104,6 @@ public class FileUtils {
                     cf.setName(fileList[i].getName());
                     cf.setPath(fileList[i].getAbsolutePath());
                     dirNameList.add(cf);
-                    System.out.println(fileList[i].getAbsolutePath());
                 }
                 if (getSubFileList(fileList[i].getAbsolutePath()) != null && getSubFileList(fileList[i].getAbsolutePath()).length > 0) {
                     getDirList(fileList[i].getAbsolutePath(), name);
@@ -117,56 +119,66 @@ public class FileUtils {
         return fileList;
     }
 
-    /** 파일을 바이트로 읽는다.*/
-    public void doFileEncrypt () {
+    /** 파일을 읽는다.*/
+    public void doFileRead(int gb) {
         for (int idx=0; idx<fileNameList.size(); idx++) {
             try (BufferedInputStream br = new BufferedInputStream(new FileInputStream(new File(fileNameList.get(idx).getAbsolutePath())))) {
-                byte[] readBuffer = new byte[br.available()];
+                byte[] readBuffer = new byte[2048];
                 while ((br.read(readBuffer, 0, readBuffer.length)) != -1) {
-                    fileNameList.get(idx).setContent(encrypt(readBuffer));
+                    if (gb == 0) { /*평문*/
+                        fileNameList.get(idx).setContent(readBuffer);
+                    } else if (gb == 1) {/*암호화*/
+                        fileNameList.get(idx).setContent(encrypt(readBuffer, helper));
+                    } else if (gb == 2) {/*복호화*/
+                        fileNameList.get(idx).setContent(decrypt(readBuffer, helper));
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (InvalidKeyException e) {
-                e.printStackTrace();
-            } catch (InvalidAlgorithmParameterException e) {
-                e.printStackTrace();
-            } catch (NoSuchPaddingException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException e) {
-                e.printStackTrace();
-            } catch (InvalidKeySpecException e) {
-                e.printStackTrace();
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e1) {
+                e1.printStackTrace();
+            } catch (InvalidKeyException e1) {
+                e1.printStackTrace();
+            } catch (InvalidAlgorithmParameterException e1) {
+                e1.printStackTrace();
+            } catch (NoSuchPaddingException e1) {
+                e1.printStackTrace();
+            } catch (BadPaddingException e1) {
+                e1.printStackTrace();
+            } catch (InvalidKeySpecException e1) {
+                e1.printStackTrace();
+            } catch (IllegalBlockSizeException e1) {
+                e1.printStackTrace();
             }
         }
     }
 
     /** 파일을 바이트로 쓴다*/
-    public void doFileWrite (ArrayList<CustomFile> param) {
-        File file = new File(path);
-        if (!file.exists()) { /*디렡토리 존재확인*/
-            file.mkdirs();
-        }
-        for (CustomFile cf : param) {
-            if ("Y".equals(cf.getChgYn())) {
-                try(FileWriter fw = new FileWriter(path+"/"+cf.getName())){
-                    for (byte[] b : cf.getContent()) {
-                        fw.write(new String(b));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+    public void doFileWrite(String root, String targetPath, String sourcePath) {
+
+        for (CustomFile cf : fileNameList) {
+            String path = cf.getParent().replaceAll(sourcePath, targetPath);
+            File backDir = new File(path);
+            if (!backDir.exists()) {
+                backDir.mkdirs();
+            }
+            try(FileWriter fw = new FileWriter(path+File.separator+cf.getName())){
+                for (byte[] b : cf.getContent()) {
+                    fw.write(new String(b));
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
 
     /** 암호화 한다.*/
-    public byte[] encrypt(byte[] data) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException, InvalidKeySpecException {
-        return cipher.encrypt(data);
+    public byte[] encrypt(byte[] data, JCryptoHelper helper) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException, InvalidKeySpecException {
+        return cipher.encrypt(data, helper);
+    }
 
+    /** 복호화 한다.*/
+    public byte[] decrypt(byte[] data, JCryptoHelper helper) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException, InvalidKeySpecException {
+        return cipher.decrypt(data, helper);
     }
 }

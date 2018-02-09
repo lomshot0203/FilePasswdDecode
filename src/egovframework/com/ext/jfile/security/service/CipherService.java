@@ -61,7 +61,7 @@ public interface CipherService {
 	 * @throws BadPaddingException 잘못된 패딩 일때 예외처리
 	 * @throws InvalidAlgorithmParameterException 유효하지 않은 알고리즘 파라미터 일때 예외처리
 	 */
-	public byte[] encrypt(byte[] data) throws NoSuchAlgorithmException,
+	public byte[] encrypt(byte[] data, JCryptoHelper helper) throws NoSuchAlgorithmException,
 			InvalidKeyException, NoSuchPaddingException, IOException,
 			InvalidKeySpecException, IllegalBlockSizeException,
 			BadPaddingException, InvalidAlgorithmParameterException;
@@ -79,64 +79,10 @@ public interface CipherService {
 	 * @throws BadPaddingException 잘못된 패딩 일때 예외처리
 	 * @throws InvalidAlgorithmParameterException 유효하지 않은 알고리즘 파라미터 일때 예외처리
 	 */
-	public byte[] decrypt(byte[] data) throws InvalidKeyException,
+	public byte[] decrypt(byte[] data, JCryptoHelper helper) throws InvalidKeyException,
 			NoSuchAlgorithmException, InvalidKeySpecException,
 			NoSuchPaddingException, IllegalBlockSizeException,
 			BadPaddingException, IOException,
 			InvalidAlgorithmParameterException;
 
-	/**
-	 * 입력스트림을 전달 받아 암호화 하여 출력스트림으로 반환한다.
-	 * @param in 입력스트림
-	 * @param out 출력스트림
-	 * @throws NoSuchAlgorithmException 암호화 알고리즘을 찾을 수 없을때 예외 처리
-	 * @throws InvalidKeyException 규칙에 맞지 않은 key 일때 예외 처리
-	 * @throws NoSuchPaddingException 패딩 정보를 찾을 수 없을때 예외 처리
-	 * @throws IOException 입/출력 예외 처리
-	 * @throws BadPaddingException 잘못된 패딩 일때 예외처리
-	 * @throws InvalidKeySpecException 규칙에 맞지 않은 keySpec 일때 예외 처리
-	 * @throws InvalidAlgorithmParameterException 유효하지 않은 알고리즘 파라미터 일때 예외처리
-	 */
-	public void encrypt(InputStream in, OutputStream out)
-			throws NoSuchAlgorithmException, InvalidKeyException,
-			NoSuchPaddingException, IOException, BadPaddingException,
-			InvalidKeySpecException, InvalidAlgorithmParameterException;
-
-	/**
-	 * 입력스트림을 전달 받아 복호화 하여 출력스트림으로 반환한다.
-	 * @param in 입력스트림
-	 * @param out 출력스트림
-	 * @throws NoSuchAlgorithmException 암호화 알고리즘을 찾을 수 없을때 예외 처리
-	 * @throws InvalidKeyException 규칙에 맞지 않은 key 일때 예외 처리
-	 * @throws IOException 입/출력 예외 처리
-	 * @throws IllegalBlockSizeException 규칙에 맞지 않은 블럭사이즈 일때 예외 처리
-	 * @throws NoSuchPaddingException 패딩 정보를 찾을 수 없을때 예외 처리
-	 * @throws BadPaddingException 잘못된 패딩 일때 예외처리
-	 * @throws InvalidKeySpecException 규칙에 맞지 않은 keySpec 일때 예외 처리
-	 * @throws InvalidAlgorithmParameterException 유효하지 않은 알고리즘 파라미터 일때 예외처리
-	 */
-	public void decrypt(InputStream in, OutputStream out)
-			throws NoSuchAlgorithmException, InvalidKeyException, IOException,
-			IllegalBlockSizeException, NoSuchPaddingException,
-			BadPaddingException, InvalidKeySpecException,
-			InvalidAlgorithmParameterException;
-
-	/**
-	 * 암호화된 파일을 복호화 한 후 ZIP 으로 압축하여 반환한다. 
-	 * @param in 입력스트림
-	 * @param out 출력스트림
-	 * @throws NoSuchAlgorithmException 암호화 알고리즘을 찾을 수 없을때 예외 처리
-	 * @throws InvalidKeyException 규칙에 맞지 않은 key 일때 예외 처리
-	 * @throws IOException 입/출력 예외 처리
-	 * @throws IllegalBlockSizeException 규칙에 맞지 않은 블럭사이즈 일때 예외 처리
-	 * @throws NoSuchPaddingException 패딩 정보를 찾을 수 없을때 예외 처리
-	 * @throws BadPaddingException 잘못된 패딩 일때 예외처리
-	 * @throws InvalidKeySpecException 규칙에 맞지 않은 keySpec 일때 예외 처리
-	 * @throws InvalidAlgorithmParameterException 유효하지 않은 알고리즘 파라미터 일때 예외처리
-	 */
-	public void decryptForZipFile(InputStream in, OutputStream out)
-			throws NoSuchAlgorithmException, InvalidKeyException, IOException,
-			IllegalBlockSizeException, NoSuchPaddingException,
-			BadPaddingException, InvalidKeySpecException,
-			InvalidAlgorithmParameterException;
 }
