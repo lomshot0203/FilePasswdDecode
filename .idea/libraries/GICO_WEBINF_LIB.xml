@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="GICO_WEBINF_LIB">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../workspace_gico/gico/src/main/webapp/WEB-INF/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../workspace_gico/gico/src/main/webapp/WEB-INF/lib" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/../../workspace_gico/gico/src/main/webapp/WEB-INF/lib" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/../../workspace_gico/gico/src/main/webapp/WEB-INF/lib" recursive="false" type="SOURCES" />
+  </library>
+</component>
